@@ -1,0 +1,261 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Placement Management System</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f2f4f8;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #243b55;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px #ccc;
+        }
+
+        input, select, button {
+            padding: 10px;
+            margin: 5px 0;
+            box-sizing: border-box;
+        }
+
+        input, select {
+            width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        .delete {
+            background: #dc2626;
+        }
+
+        .delete:hover {
+            background: #b91c1c;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        th {
+            background: #243b55;
+            color: white;
+        }
+
+        .placed {
+            color: green;
+            font-weight: bold;
+        }
+
+        .not-placed {
+            color: #dc2626;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Placement Management System</h1>
+
+    <div class="container">
+        <h2>Add Student</h2>
+
+        <form id="studentForm">
+            <input type="text" id="name"
+                   placeholder="Student Name" required>
+
+            <input type="text" id="roll"
+                   placeholder="Roll Number" required>
+
+            <input type="text" id="branch"
+                   placeholder="Branch" required>
+
+            <input type="text" id="company"
+                   placeholder="Company Name" required>
+
+            <select id="status">
+                <option value="Not Placed">Not Placed</option>
+                <option value="Placed">Placed</option>
+            </select>
+
+            <button type="submit">Add Student</button>
+        </form>
+
+        <h2>Student Records</h2>
+
+        <input type="text" id="search"
+               placeholder="Search by name or roll number">
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Roll No</th>
+                        <th>Branch</th>
+                        <th>Company</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+
+                <tbody id="studentList"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let students = JSON.parse(
+            localStorage.getItem("students") || "[]"
+        );
+
+        const form = document.getElementById("studentForm");
+        const list = document.getElementById("studentList");
+        const search = document.getElementById("search");
+
+        function saveStudents() {
+            localStorage.setItem(
+                "students",
+                JSON.stringify(students)
+            );
+        }
+
+        function displayStudents() {
+            list.replaceChildren();
+
+            const keyword = search.value.toLowerCase();
+
+            students.forEach((student, index) => {
+                if (
+                    !student.name.toLowerCase().includes(keyword) &&
+                    !student.roll.toLowerCase().includes(keyword)
+                ) {
+                    return;
+                }
+
+                const row = document.createElement("tr");
+
+                [
+                    student.name,
+                    student.roll,
+                    student.branch,
+                    student.company,
+                    student.status
+                ].forEach((value, i) => {
+                    const cell = document.createElement("td");
+                    cell.textContent = value;
+
+                    if (i === 4) {
+                        cell.className = value === "Placed"
+                            ? "placed" : "not-placed";
+                    }
+
+                    row.appendChild(cell);
+                });
+
+                const action = document.createElement("td");
+
+                const toggle = document.createElement("button");
+                toggle.textContent = student.status === "Placed"
+                    ? "Mark Not Placed" : "Mark Placed";
+
+                toggle.addEventListener("click", () => {
+                    student.status = student.status === "Placed"
+                        ? "Not Placed" : "Placed";
+
+                    saveStudents();
+                    displayStudents();
+                });
+
+                const remove = document.createElement("button");
+                remove.textContent = "Delete";
+                remove.className = "delete";
+
+                remove.addEventListener("click", () => {
+                    if (confirm("Delete this student?")) {
+                        students.splice(index, 1);
+                        saveStudents();
+                        displayStudents();
+                    }
+                });
+
+                action.append(toggle, remove);
+                row.appendChild(action);
+                list.appendChild(row);
+            });
+        }
+
+        form.addEventListener("submit", function(event) {
+            event.preventDefault();
+
+            const roll = document.getElementById("roll").value.trim();
+
+            if (students.some(s =>
+                s.roll.toLowerCase() === roll.toLowerCase()
+            )) {
+                alert("This roll number already exists!");
+                return;
+            }
+
+            students.push({
+                name: document.getElementById("name").value.trim(),
+                roll: roll,
+                branch: document.getElementById("branch").value.trim(),
+                company: document.getElementById("company").value.trim(),
+                status: document.getElementById("status").value
+            });
+
+            saveStudents();
+            displayStudents();
+            form.reset();
+
+            alert("Student added successfully!");
+        });
+
+        search.addEventListener("input", displayStudents);
+
+        displayStudents();
+    </script>
+
+</body>
+</html>
